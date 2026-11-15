@@ -1,0 +1,24 @@
+# Mantém este fork igual ao repositório do Danilo (dannnpereira/ProGest).
+# A Vercel publica a partir deste fork, então cada PR aceito lá chega aos sites
+# em até ~15 minutos, sem precisar clicar em "Sync fork".
+# Este arquivo existe só no fork (não vai para o repositório do Danilo).
+name: Sincronizar com dannnpereira/ProGest
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # a cada 15 minutos
+  workflow_dispatch:          # botão "Run workflow" para sincronizar na hora
+
+permissions:
+  contents: write
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trazer a main do repositório original
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/merge-upstream" -f branch=main \
+            --jq '"Resultado: \(.merge_type) - \(.message)"'
