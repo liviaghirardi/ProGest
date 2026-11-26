@@ -1,9 +1,15 @@
-# Sobe o projeto inteiro em uma maquina (EC2):
+# Sobe o projeto inteiro em uma maquina (EC2). Antes, copie .env.example para .env
+# e preencha as senhas e o DOCKERHUB_USUARIO.
+#
+# Normal: baixa as imagens prontas que a Action publica no Docker Hub a cada merge na main
+#   docker compose pull && docker compose up -d
+# Sem Docker Hub (ou para testar uma mudanca local): gera as imagens na propria maquina
 #   docker compose up -d --build
-# Antes, copie .env.example para .env e defina DB_PASSWORD.
 
 services:
   backend:
+    # VERSAO=latest (padrao) ou uma versao publicada (ex.: v42) para voltar atras
+    image: ${DOCKERHUB_USUARIO:?Defina DOCKERHUB_USUARIO no arquivo .env}/progest-api:${VERSAO:-latest}
     build: ./backend/Backend_api
     restart: unless-stopped
     environment:
@@ -20,6 +26,14 @@ services:
       # Dados ficticios para apresentacao (opcional; roda uma vez so por banco)
       DEMO_DADOS: ${DEMO_DADOS:-false}
       DEMO_SENHA: ${DEMO_SENHA:-}
+      # Recuperacao de senha do cliente: endereco do site (vai no link) e SMTP (opcional;
+      # sem MAIL_HOST o e-mail nao sai, mas o ERP gera o link para mandar pelo WhatsApp)
+      SITE_URL: ${SITE_URL:-}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
       # Limita a memoria do Java para caber em uma instancia pequena
       JAVA_TOOL_OPTIONS: -Xms128m -Xmx512m
     volumes:
@@ -27,6 +41,7 @@ services:
     # Sem "ports": o backend so e acessivel pelo Nginx
 
   web:
+    image: ${DOCKERHUB_USUARIO:?Defina DOCKERHUB_USUARIO no arquivo .env}/progest-frontend:${VERSAO:-latest}
     build:
       context: .
       dockerfile: deploy/web.Dockerfile
